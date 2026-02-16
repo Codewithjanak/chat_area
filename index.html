@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shared Local Board</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .container { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        
+        /* User Header */
+        .user-info { background: #e7f3ff; padding: 10px; border-radius: 8px; margin-bottom: 20px; color: #0e67c4; font-weight: bold; }
+        
+        /* Input Area */
+        textarea { width: 100%; height: 100px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; resize: none; font-size: 1rem; }
+        button { width: 100%; margin-top: 10px; padding: 12px; background: #1877f2; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #166fe5; }
+
+        /* The Feed */
+        .feed { margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+        .post { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 5px solid #1877f2; }
+        .post-header { display: flex; justify-content: space-between; font-size: 0.8em; color: #65676b; margin-bottom: 5px; }
+        .post-author { font-weight: bold; color: #1c1e21; font-size: 1.1em; }
+        .post-content { word-wrap: break-word; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="userInfo" class="user-info">Identifying user...</div>
+    
+    <textarea id="msgInput" placeholder="Write something to the board..."></textarea>
+    <button onclick="postMessage()">Post Message</button>
+
+    <div class="feed" id="feed">
+        <h3>Recent Activity</h3>
+        </div>
+</div>
+
+<script>
+    let currentUser = localStorage.getItem('chat_username');
+
+    // 1. Initialize User
+    if (!currentUser) {
+        currentUser = prompt("Welcome! Please enter your name for this PC:") || "Guest";
+        localStorage.setItem('chat_username', currentUser);
+    }
+    document.getElementById('userInfo').innerText = "Logged in as: " + currentUser;
+
+    // 2. Load all messages on startup
+    window.onload = displayMessages;
+
+    function postMessage() {
+        const text = document.getElementById('msgInput').value.trim();
+        if (!text) return;
+
+        // Get existing messages or create empty array
+        const allMessages = JSON.parse(localStorage.getItem('community_board') || "[]");
+
+        // Create new message object
+        const newMessage = {
+            author: currentUser,
+            content: text,
+            time: new Date().toLocaleString()
+        };
+
+        // Add to list and save
+        allMessages.unshift(newMessage); // Adds to the top
+        localStorage.setItem('community_board', JSON.stringify(allMessages));
+
+        // Clear input and refresh display
+        document.getElementById('msgInput').value = "";
+        displayMessages();
+    }
+
+    function displayMessages() {
+        const feed = document.getElementById('feed');
+        const allMessages = JSON.parse(localStorage.getItem('community_board') || "[]");
+        
+        // Keep the heading
+        feed.innerHTML = '<h3>Recent Activity</h3>';
+
+        allMessages.forEach(msg => {
+            const postDiv = document.createElement('div');
+            postDiv.className = 'post';
+            postDiv.innerHTML = `
+                <div class="post-header">
+                    <span class="post-author">${msg.author}</span>
+                    <span>${msg.time}</span>
+                </div>
+                <div class="post-content">${msg.content}</div>
+            `;
+            feed.appendChild(postDiv);
+        });
+    }
+</script>
+
+</body>
+</html>
